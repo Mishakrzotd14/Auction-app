@@ -14,9 +14,6 @@ class Auction(models.Model):
     auction_status = models.CharField(max_length=20, choices=AUCTION_STATUS_CHOICES)
     base_price = models.DecimalField(max_digits=10, decimal_places=2)
 
-    class Meta:
-        abstract = True
-
 
 class EnglishAuction(Auction):
     opening_price = models.DecimalField(max_digits=10, decimal_places=2)
