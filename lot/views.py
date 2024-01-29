@@ -1,8 +1,8 @@
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 
-from .models import Lot
-from .serializers import LotSerializer
+from lot.models import Lot
+from lot.serializers import LotSerializer
 
 
 class LotListView(viewsets.ModelViewSet):

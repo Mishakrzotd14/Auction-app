@@ -1,6 +1,8 @@
-from rest_framework.routers import DefaultRouter
+from rest_framework import routers
 
-from .views import LotListView
+from lot.views import LotListView
 
-router = DefaultRouter()
-router.register(r'lots', LotListView)
+router = routers.SimpleRouter()
+
+router.register('lot', LotListView, basename='lot')
+urlpatterns = router.urls
