@@ -1,15 +1,14 @@
 from rest_framework import serializers
 
-from auction.serializers import EnglishAuctionSerializer, DutchAuctionSerializer
+from auction.serializers import AuctionSerializer
 from item.serializers import ItemSerializer
 from lot.models import Lot
 
 
 class LotSerializer(serializers.ModelSerializer):
     item = ItemSerializer()
-    english_auction = EnglishAuctionSerializer()
-    dutch_auction = DutchAuctionSerializer()
+    auction = AuctionSerializer()
 
     class Meta:
         model = Lot
-        fields = ('id', 'item', 'english_auction', 'dutch_auction')
+        fields = ('id', 'item', 'auction')
