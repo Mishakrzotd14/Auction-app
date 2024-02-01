@@ -1,11 +1,7 @@
 from django.contrib import admin
 
 from auction.models import EnglishAuction, DutchAuction
-from lot.models import Lot
-
-
-class LotInline(admin.TabularInline):
-    model = Lot
+from lot.admin import LotInline
 
 
 @admin.register(EnglishAuction)
