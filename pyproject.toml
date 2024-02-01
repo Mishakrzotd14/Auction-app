@@ -13,6 +13,7 @@ load-dotenv = "^0.1.0"
 psycopg2 = "^2.9.9"
 pillow = "^10.2.0"
 django-filter = "^23.5"
+djangorestframework-simplejwt = "^5.3.1"
 
 
 [tool.poetry.group.dev.dependencies]
