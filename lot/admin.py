@@ -1,3 +1,7 @@
 from django.contrib import admin
 
-# Register your models here.
+from lot.models import Lot
+
+
+class LotInline(admin.TabularInline):
+    model = Lot
