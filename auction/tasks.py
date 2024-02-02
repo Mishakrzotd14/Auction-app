@@ -13,5 +13,5 @@ def change_auction_status(auction_id):
     elif auction.opening_date >= now < auction.closing_date:
         auction.auction_status = 'IN_PROGRESS'
     elif auction.opening_date >= now < auction.closing_date:
-        auction.auction_status = 'IN_PROGRESS'
+        auction.auction_status = 'CLOSED'
     auction.save()
