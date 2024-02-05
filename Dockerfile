@@ -1,14 +1,22 @@
 FROM python:3.11
 
+RUN apt-get update && \
+    apt-get install -y curl && \
+    rm -rf /var/lib/apt/lists/* && \
+    curl -sSL https://install.python-poetry.org | python3 - && \
+    export PATH="${PATH}:/root/.local/bin"
+
 RUN curl -sSL https://install.python-poetry.org | python3 -
 
-ENV PATH="${PATH}:/Auction-app/.venv/bin:/root/.local/bin"
+ENV PATH="${PATH}:/root/.local/bin"
 
 RUN mkdir /Auction-app
 
 WORKDIR /Auction-app
 
-COPY pyproject.toml poetry.lock .
-RUN poetry install --no-dev --no-root
+COPY pyproject.toml poetry.lock /Auction-app/
+RUN poetry config virtualenvs.create false && \
+    poetry install
 
-COPY . .
+# Копируем остальные файлы проекта
+COPY . /Auction-app/
