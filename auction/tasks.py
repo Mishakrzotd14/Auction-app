@@ -1,17 +1,18 @@
-from celery import shared_task
+from config.celery import app
 from datetime import datetime
 
-from auction.models import Auction
+from auction.models import Auction, Status
 
 
-@shared_task
-def change_auction_status(auction_id):
+@app.task
+def open_auction_task(auction_id):
     auction = Auction.objects.get(pk=auction_id)
-    now = datetime.now()
-    if now < auction.opening_date:
-        auction.auction_status = 'PENDING'
-    elif auction.opening_date >= now < auction.closing_date:
-        auction.auction_status = 'IN_PROGRESS'
-    elif auction.opening_date >= now < auction.closing_date:
-        auction.auction_status = 'CLOSED'
+    auction.auction_status = Status.IN_PROGRESS
+    auction.save()
+
+
+@app.task
+def close_auction_task(auction_id):
+    auction = Auction.objects.get(pk=auction_id)
+    auction.auction_status = Status.COMPLETED
     auction.save()

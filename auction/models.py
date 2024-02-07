@@ -1,17 +1,16 @@
 from django.db import models
 
 
-AUCTION_STATUS_CHOICES = [
-    ('PENDING', 'Pending'),
-    ('IN_PROGRESS', 'In Progress'),
-    ('CLOSED', 'Closed'),
-]
+class Status(models.IntegerChoices):
+    PENDING = 0
+    IN_PROGRESS = 1
+    COMPLETED = 2
 
 
 class Auction(models.Model):
     opening_date = models.DateTimeField()
     closing_date = models.DateTimeField()
-    auction_status = models.CharField(max_length=20, choices=AUCTION_STATUS_CHOICES)
+    auction_status = models.IntegerField(choices=Status.choices, default=Status.PENDING)
     base_price = models.DecimalField(max_digits=10, decimal_places=2)
 
 
