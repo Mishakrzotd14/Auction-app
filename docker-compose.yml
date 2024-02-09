@@ -3,9 +3,6 @@ services:
   db:
     image: postgres:16
     container_name: db
-    command: -p 5432
-    expose:
-      - 5432
     env_file:
       - .env
     ports:
@@ -18,9 +15,6 @@ services:
   redis:
     image: redis:7
     container_name: redis
-    command: --port 6379
-    expose:
-      - 6379
     env_file:
       - .env
     ports:
@@ -33,9 +27,6 @@ services:
       - .env
     container_name: django_app
     command: sh -c "python manage.py migrate && python manage.py createsuperuser --noinput  && python manage.py runserver 0.0.0.0:8000"
-
-    expose:
-      - 8000
     ports:
       - 8000:8000
     depends_on:
@@ -48,7 +39,7 @@ services:
     env_file:
       - .env
     container_name: celery
-    command: sh -c "celery -A config worker -l INFO"
+    command: celery -A config worker -l INFO
     depends_on:
       - redis
 
@@ -58,7 +49,7 @@ services:
     env_file:
       - .env
     container_name: flower
-    command: sh -c "celery -A config flower"
+    command: celery -A config flower
     depends_on:
       - redis
       - celery
