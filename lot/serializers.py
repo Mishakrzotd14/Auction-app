@@ -15,6 +15,8 @@ class LotSerializer(serializers.ModelSerializer):
 
 
 class OfferSerializer(serializers.ModelSerializer):
+    lot = LotSerializer()
+
     class Meta:
         model = Offer
-        fields = ('lot', 'user', 'offer_price', 'date_creation')
+        fields = ('lot', 'user', 'price', 'date_creation')
