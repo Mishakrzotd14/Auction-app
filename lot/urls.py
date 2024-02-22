@@ -4,5 +4,5 @@ from lot.views import LotListView
 
 router = routers.SimpleRouter()
 
-router.register('', LotListView, basename='lot')
+router.register('lot', LotListView, basename='lot')
 urlpatterns = router.urls
