@@ -4,7 +4,7 @@ from auction.models import Status
 
 
 def validate_status(lot):
-    auction_status = lot.auction.status
+    auction_status = lot.auction.auction_status
     if auction_status != Status.IN_PROGRESS:
         raise ValidationError(f"The status is incorrect, current status is {auction_status}")
 

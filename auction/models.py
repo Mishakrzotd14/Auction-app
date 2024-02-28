@@ -1,5 +1,8 @@
 from django.db import models
 
+TASK_NAME_CLOSE_AUCTION = 'close_auction'
+TASK_NAME_UPDATE_PRICE = 'update_dutch_auction_price'
+
 
 class Status(models.IntegerChoices):
     PENDING = 0

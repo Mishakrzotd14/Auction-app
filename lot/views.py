@@ -6,12 +6,13 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.response import Response
 from django.db import transaction
 
-from auction.models import Status
+from auction.models import Status, TASK_NAME_UPDATE_PRICE, TASK_NAME_CLOSE_AUCTION
 from lot.filters import AuctionTypeFilter
 from lot.models import Lot, Offer
 from lot.serializers import LotSerializer, OfferSerializer
 from lot.validators import validate_status, validate_offer_price, validate_type_auction_english, \
     validate_offer_price_buy_it_now
+from config.celery import app
 
 
 class LotsLimitOffsetPagination(LimitOffsetPagination):
@@ -57,13 +58,19 @@ class LotListView(viewsets.ModelViewSet):
         lot = self.get_object()
         auction = lot.auction
         validate_status(lot)
-        validate_offer_price_buy_it_now(lot)
+        if hasattr(auction, 'englishauction'):
+            validate_offer_price_buy_it_now(lot)
 
-        offer_price = lot.auction.englishauction.buy_it_now_price
-        Offer.objects.create(user=request.user, lot=lot, price=offer_price)
+            offer_price = lot.auction.englishauction.buy_it_now_price
+            Offer.objects.create(user=request.user, lot=lot, price=offer_price)
 
-        auction.current_price = offer_price
-        auction.status = Status.CLOSED
-        auction.save(update_fields=['current_price', 'auction_status'])
-
+            auction.current_price = offer_price
+            auction.auction_status = Status.CLOSED
+            auction.save(update_fields=['current_price', 'auction_status'])
+        elif hasattr(auction, 'dutchauction'):
+            Offer.objects.create(user=request.user, lot=lot, price=auction.current_price)
+            auction.auction_status = Status.CLOSED
+            auction.save(update_fields=['auction_status'])
+            app.control.revoke(task_id=f'{TASK_NAME_UPDATE_PRICE}_{auction.id}')
+        app.control.revoke(task_id=f'{TASK_NAME_CLOSE_AUCTION}_{auction.id}')
         return Response({"message": "Buy it now offer has been accepted."}, status=status.HTTP_201_CREATED)
