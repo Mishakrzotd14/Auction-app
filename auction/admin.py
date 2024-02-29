@@ -28,9 +28,9 @@ class DutchAuctionAdmin(BaseAuctionAdmin):
         super().save_model(request, obj, form, change)
 
         total_tasks = int((obj.closing_date - obj.opening_date).total_seconds() / (obj.frequency * 60))
-        delta = (obj.start_price - obj.end_price) / total_tasks
+        delta = float(obj.start_price - obj.end_price) / total_tasks
 
-        for i in range(1, total_tasks + 1):
-            task_eta = obj.opening_date + timedelta(minutes=obj.frequency * i)
+        for idx in range(1, total_tasks + 1):
+            task_eta = obj.opening_date + timedelta(minutes=obj.frequency * idx)
             update_dutch_auction_price_task.apply_async(args=(obj.id, delta), eta=task_eta,
                                                         task_id=f"{TASK_NAME_UPDATE_PRICE}_{obj.id}")

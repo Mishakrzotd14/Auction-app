@@ -54,21 +54,20 @@ class LotListView(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     @transaction.atomic
-    def make_offer_buy_it_now(self, request, pk=None):
+    def buy_it_now(self, request, pk=None):
         lot = self.get_object()
         auction = lot.auction
         validate_status(lot)
         if hasattr(auction, 'englishauction'):
             validate_offer_price_buy_it_now(lot)
 
-            offer_price = lot.auction.englishauction.buy_it_now_price
-            Offer.objects.create(user=request.user, lot=lot, price=offer_price)
+            buy_it_now_price = lot.auction.englishauction.buy_it_now_price
+            Offer.objects.create(user=request.user, lot=lot, price=buy_it_now_price)
 
-            auction.current_price = offer_price
+            auction.current_price = buy_it_now_price
             auction.auction_status = Status.CLOSED
             auction.save(update_fields=['current_price', 'auction_status'])
         elif hasattr(auction, 'dutchauction'):
-            Offer.objects.create(user=request.user, lot=lot, price=auction.current_price)
             auction.auction_status = Status.CLOSED
             auction.save(update_fields=['auction_status'])
             app.control.revoke(task_id=f'{TASK_NAME_UPDATE_PRICE}_{auction.id}')
