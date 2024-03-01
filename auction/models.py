@@ -27,3 +27,7 @@ class DutchAuction(Auction):
     start_price = models.DecimalField(max_digits=10, decimal_places=2)
     end_price = models.DecimalField(max_digits=10, decimal_places=2)
     frequency = models.IntegerField()
+
+    @property
+    def get_total_tasks(self):
+        return int((self.closing_date - self.opening_date).total_seconds() / (self.frequency * 60))
