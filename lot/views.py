@@ -70,8 +70,10 @@ class LotListView(viewsets.ModelViewSet):
         elif hasattr(auction, 'dutchauction'):
             auction.auction_status = Status.CLOSED
             auction.save(update_fields=['auction_status'])
-            for idx in range(1, auction.dutchauction.get_total_tasks + 1):
-                task_id = f"{TASK_NAME_UPDATE_PRICE}_{auction.id}_{idx}"
-                app.control.revoke(task_id=task_id, terminate=True)
+            app.control.revoke(
+                task_id=[f"{TASK_NAME_UPDATE_PRICE}_{auction.id}_{idx}"
+                         for idx in range(1, auction.dutchauction.get_total_tasks + 1)],
+                terminate=True
+            )
         app.control.revoke(task_id=f'{TASK_NAME_CLOSE_AUCTION}_{auction.id}')
         return Response({"message": "Buy it now offer has been accepted."}, status=status.HTTP_201_CREATED)

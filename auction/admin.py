@@ -26,7 +26,7 @@ class EnglishAuctionAdmin(BaseAuctionAdmin):
 class DutchAuctionAdmin(BaseAuctionAdmin):
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
-        total_tasks = obj.get_total_tasks
+        total_tasks = obj.total_tasks
         delta = (obj.start_price - obj.end_price) / total_tasks
         for idx in range(1, total_tasks + 1):
             task_eta = obj.opening_date + timedelta(minutes=obj.frequency * idx)
