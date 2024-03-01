@@ -1,6 +1,6 @@
 from config.celery import app
 
-from auction.models import Auction, Status
+from auction.models import Auction, Status, DutchAuction
 
 
 @app.task
@@ -18,3 +18,10 @@ def open_auction_task(auction_id):
 @app.task
 def close_auction_task(auction_id):
     Auction.objects.filter(pk=auction_id).update(auction_status=Status.CLOSED)
+
+
+@app.task
+def update_dutch_auction_price_task(auction_id, delta_price):
+    auction = DutchAuction.objects.get(pk=auction_id)
+    auction.current_price -= delta_price
+    auction.save(update_fields=['current_price'])

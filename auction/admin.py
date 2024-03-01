@@ -1,6 +1,8 @@
+from datetime import timedelta
+
 from django.contrib import admin
-from auction.tasks import open_auction_task, close_auction_task
-from auction.models import EnglishAuction, DutchAuction
+from auction.tasks import open_auction_task, close_auction_task, update_dutch_auction_price_task
+from auction.models import EnglishAuction, DutchAuction, TASK_NAME_UPDATE_PRICE, TASK_NAME_CLOSE_AUCTION
 
 from lot.admin import LotInline
 
@@ -11,7 +13,8 @@ class BaseAuctionAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
         open_auction_task.apply_async(args=(obj.id,), eta=obj.opening_date)
-        close_auction_task.apply_async(args=(obj.id,), eta=obj.closing_date)
+        close_auction_task.apply_async(args=(obj.id,), eta=obj.closing_date,
+                                       task_id=f"{TASK_NAME_CLOSE_AUCTION}_{obj.id}")
 
 
 @admin.register(EnglishAuction)
@@ -21,4 +24,12 @@ class EnglishAuctionAdmin(BaseAuctionAdmin):
 
 @admin.register(DutchAuction)
 class DutchAuctionAdmin(BaseAuctionAdmin):
-    pass
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        total_tasks = obj.total_tasks
+        delta = (obj.start_price - obj.end_price) / total_tasks
+        for idx in range(1, total_tasks + 1):
+            task_eta = obj.opening_date + timedelta(minutes=obj.frequency * idx)
+            task_id = f"{TASK_NAME_UPDATE_PRICE}_{obj.id}_{idx}"
+            update_dutch_auction_price_task.apply_async(args=(obj.id, delta), eta=task_eta,
+                                                        task_id=task_id)

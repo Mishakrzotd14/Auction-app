@@ -1,5 +1,8 @@
 from django.db import models
 
+TASK_NAME_CLOSE_AUCTION = 'close_auction'
+TASK_NAME_UPDATE_PRICE = 'update_dutch_auction_price'
+
 
 class Status(models.IntegerChoices):
     PENDING = 0
@@ -24,3 +27,7 @@ class DutchAuction(Auction):
     start_price = models.DecimalField(max_digits=10, decimal_places=2)
     end_price = models.DecimalField(max_digits=10, decimal_places=2)
     frequency = models.IntegerField()
+
+    @property
+    def total_tasks(self):
+        return int((self.closing_date - self.opening_date).total_seconds() / (self.frequency * 60))
