@@ -10,6 +10,7 @@ from auction.models import Status, TASK_NAME_UPDATE_PRICE, TASK_NAME_CLOSE_AUCTI
 from lot.filters import AuctionTypeFilter
 from lot.models import Lot, Offer
 from lot.serializers import LotSerializer, OfferSerializer
+from lot.services.change_price_service import send_email_about_change_price
 from lot.validators import validate_status, validate_offer_price, validate_type_auction_english, \
     validate_offer_price_buy_it_now
 from config.celery import app
@@ -45,6 +46,7 @@ class LotListView(viewsets.ModelViewSet):
             offer_price = serializer.validated_data['price']
             validate_offer_price(lot, offer_price)
 
+            send_email_about_change_price(lot, request.user, offer_price)
             Offer.objects.create(user=request.user, lot=lot, price=offer_price)
 
             auction.current_price = offer_price
