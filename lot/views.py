@@ -6,7 +6,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.response import Response
 from django.db import transaction
 
-from auction.models import Status, TASK_NAME_UPDATE_PRICE, TASK_NAME_CLOSE_AUCTION
+from auction.models import Status, TASK_NAME_UPDATE_PRICE, TASK_NAME_CLOSE_AUCTION, TASK_NAME_ENG_AUC_LOT_SOLD_EMAIL
+from auction.tasks import send_lot_sold_email_task
 from lot.filters import AuctionTypeFilter
 from lot.models import Lot, Offer
 from lot.serializers import LotSerializer, OfferSerializer
@@ -60,6 +61,8 @@ class LotListView(viewsets.ModelViewSet):
         lot = self.get_object()
         auction = lot.auction
         validate_status(lot)
+        user_email = lot.user.email
+
         if hasattr(auction, 'englishauction'):
             validate_offer_price_buy_it_now(lot)
 
@@ -69,6 +72,9 @@ class LotListView(viewsets.ModelViewSet):
             auction.current_price = buy_it_now_price
             auction.auction_status = Status.CLOSED
             auction.save(update_fields=['current_price', 'auction_status'])
+            if user_email != '':
+                send_lot_sold_email_task(lot, user_email)
+            app.control.revoke(task_id=f'{TASK_NAME_ENG_AUC_LOT_SOLD_EMAIL}_{auction.id}')
         elif hasattr(auction, 'dutchauction'):
             auction.auction_status = Status.CLOSED
             auction.save(update_fields=['auction_status'])
@@ -77,5 +83,7 @@ class LotListView(viewsets.ModelViewSet):
                          for idx in range(1, auction.dutchauction.get_total_tasks + 1)],
                 terminate=True
             )
+            if user_email != '':
+                send_lot_sold_email_task(lot, user_email)
         app.control.revoke(task_id=f'{TASK_NAME_CLOSE_AUCTION}_{auction.id}')
         return Response({"message": "Buy it now offer has been accepted."}, status=status.HTTP_201_CREATED)

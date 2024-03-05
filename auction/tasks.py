@@ -3,8 +3,8 @@ from django.core.mail import send_mail
 from config import settings
 from config.celery import app
 
-from auction.models import Auction, Status, DutchAuction
-from lot.models import Lot
+from auction.models import Auction, Status, DutchAuction, EnglishAuction
+from lot.models import Offer
 
 
 @app.task
@@ -40,3 +40,25 @@ def send_price_change_email_task(lot, email, new_price):
     recipient_list = [email]
 
     send_mail(subject, message, from_email, recipient_list)
+
+
+@app.task
+def send_lot_sold_email_task(lot, email):
+    subject = 'Lot sold notification'
+    message = f'Congratulations! You bought a lot "{lot.item.title}" for ${lot.auction.current_price}.'
+    from_email = settings.EMAIL_HOST_USER
+    recipient_list = [email]
+
+    send_mail(subject, message, from_email, recipient_list)
+
+
+@app.task
+def send_english_auction_lot_sold_email_task(auction_id):
+    auction = EnglishAuction.objects.get(pk=auction_id)
+    offer = Offer.objects.filter(lot=auction.lot)
+    if offer.exists():
+        last_offer = offer.latest('date_creation')
+        user_email = last_offer.user.email
+        if user_email != '':
+            if offer.price >= auction.reserve_price:
+                send_lot_sold_email_task(offer.lot.pk, user_email)
