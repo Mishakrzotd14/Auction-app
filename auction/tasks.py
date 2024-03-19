@@ -5,6 +5,7 @@ from config.celery import app
 
 from auction.models import Auction, Status, DutchAuction, EnglishAuction
 from lot.models import Offer
+from lot.services.change_price_service import get_last_offer
 
 
 @app.task
@@ -45,7 +46,7 @@ def send_price_change_email_task(lot, email, new_price):
 @app.task
 def send_lot_sold_email_task(lot, email):
     subject = 'Lot sold notification'
-    message = f'Congratulations! You bought a lot "{lot.item.title}" for ${lot.auction.current_price}.'
+    message = f'Congratulations! You bought a lot {lot!r} for ${lot.auction.current_price}.'
     from_email = settings.EMAIL_HOST_USER
     recipient_list = [email]
 
@@ -55,10 +56,8 @@ def send_lot_sold_email_task(lot, email):
 @app.task
 def send_english_auction_lot_sold_email_task(auction_id):
     auction = EnglishAuction.objects.get(pk=auction_id)
-    offer = Offer.objects.filter(lot=auction.lot)
-    if offer.exists():
-        last_offer = offer.latest('date_creation')
+    last_offer = get_last_offer(auction.lot)
+    if last_offer:
         user_email = last_offer.user.email
-        if user_email != '':
-            if offer.price >= auction.reserve_price:
-                send_lot_sold_email_task(offer.lot.pk, user_email)
+        if user_email:
+            send_lot_sold_email_task(last_offer.lot.pk, user_email)

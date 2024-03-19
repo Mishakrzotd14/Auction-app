@@ -1,11 +1,19 @@
 from datetime import timedelta
 
 from django.contrib import admin
-from auction.tasks import open_auction_task, close_auction_task, update_dutch_auction_price_task, \
+from auction.tasks import (
+    open_auction_task,
+    close_auction_task,
+    update_dutch_auction_price_task,
     send_english_auction_lot_sold_email_task
-from auction.models import EnglishAuction, DutchAuction, TASK_NAME_UPDATE_PRICE, TASK_NAME_CLOSE_AUCTION, \
+)
+from auction.models import (
+    EnglishAuction,
+    DutchAuction,
+    TASK_NAME_UPDATE_PRICE,
+    TASK_NAME_CLOSE_AUCTION,
     TASK_NAME_ENG_AUC_LOT_SOLD_EMAIL
-
+)
 from lot.admin import LotInline
 
 
