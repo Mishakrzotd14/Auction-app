@@ -9,6 +9,9 @@ class Lot(models.Model):
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     auction = models.ForeignKey(Auction, on_delete=models.CASCADE)
 
+    def __str__(self):
+        return f'{self.item.title}'
+
 
 class Offer(models.Model):
     lot = models.ForeignKey(Lot, on_delete=models.CASCADE)

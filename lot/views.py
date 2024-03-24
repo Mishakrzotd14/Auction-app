@@ -6,12 +6,18 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.response import Response
 from django.db import transaction
 
-from auction.models import Status, TASK_NAME_UPDATE_PRICE, TASK_NAME_CLOSE_AUCTION
+from auction.models import Status, TASK_NAME_UPDATE_PRICE, TASK_NAME_CLOSE_AUCTION, TASK_NAME_ENG_AUC_LOT_SOLD_EMAIL
+from auction.tasks import send_lot_sold_email_task
 from lot.filters import AuctionTypeFilter
 from lot.models import Lot, Offer
 from lot.serializers import LotSerializer, OfferSerializer
-from lot.validators import validate_status, validate_offer_price, validate_type_auction_english, \
+from lot.services.change_price_service import send_email_about_change_price
+from lot.validators import (
+    validate_status,
+    validate_offer_price,
+    validate_type_auction_english,
     validate_offer_price_buy_it_now
+)
 from config.celery import app
 
 
@@ -45,6 +51,7 @@ class LotListView(viewsets.ModelViewSet):
             offer_price = serializer.validated_data['price']
             validate_offer_price(lot, offer_price)
 
+            send_email_about_change_price(lot, request.user, offer_price)
             Offer.objects.create(user=request.user, lot=lot, price=offer_price)
 
             auction.current_price = offer_price
@@ -58,6 +65,8 @@ class LotListView(viewsets.ModelViewSet):
         lot = self.get_object()
         auction = lot.auction
         validate_status(lot)
+        user_email = lot.user.email
+
         if hasattr(auction, 'englishauction'):
             validate_offer_price_buy_it_now(lot)
 
@@ -67,6 +76,7 @@ class LotListView(viewsets.ModelViewSet):
             auction.current_price = buy_it_now_price
             auction.auction_status = Status.CLOSED
             auction.save(update_fields=['current_price', 'auction_status'])
+            app.control.revoke(task_id=f'{TASK_NAME_ENG_AUC_LOT_SOLD_EMAIL}_{auction.id}')
         elif hasattr(auction, 'dutchauction'):
             auction.auction_status = Status.CLOSED
             auction.save(update_fields=['auction_status'])
@@ -75,5 +85,7 @@ class LotListView(viewsets.ModelViewSet):
                          for idx in range(1, auction.dutchauction.get_total_tasks + 1)],
                 terminate=True
             )
+        if user_email:
+            send_lot_sold_email_task(lot, user_email)
         app.control.revoke(task_id=f'{TASK_NAME_CLOSE_AUCTION}_{auction.id}')
         return Response({"message": "Buy it now offer has been accepted."}, status=status.HTTP_201_CREATED)

@@ -1,9 +1,19 @@
 from datetime import timedelta
 
 from django.contrib import admin
-from auction.tasks import open_auction_task, close_auction_task, update_dutch_auction_price_task
-from auction.models import EnglishAuction, DutchAuction, TASK_NAME_UPDATE_PRICE, TASK_NAME_CLOSE_AUCTION
-
+from auction.tasks import (
+    open_auction_task,
+    close_auction_task,
+    update_dutch_auction_price_task,
+    send_english_auction_lot_sold_email_task
+)
+from auction.models import (
+    EnglishAuction,
+    DutchAuction,
+    TASK_NAME_UPDATE_PRICE,
+    TASK_NAME_CLOSE_AUCTION,
+    TASK_NAME_ENG_AUC_LOT_SOLD_EMAIL
+)
 from lot.admin import LotInline
 
 
@@ -19,7 +29,10 @@ class BaseAuctionAdmin(admin.ModelAdmin):
 
 @admin.register(EnglishAuction)
 class EnglishAuctionAdmin(BaseAuctionAdmin):
-    pass
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        send_english_auction_lot_sold_email_task.apply_async(args=(obj.id,), eta=obj.closing_date,
+                                                             task_id=f"{TASK_NAME_ENG_AUC_LOT_SOLD_EMAIL}_{obj.id}")
 
 
 @admin.register(DutchAuction)

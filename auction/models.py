@@ -2,6 +2,7 @@ from django.db import models
 
 TASK_NAME_CLOSE_AUCTION = 'close_auction'
 TASK_NAME_UPDATE_PRICE = 'update_dutch_auction_price'
+TASK_NAME_ENG_AUC_LOT_SOLD_EMAIL = 'send_english_auction_lot_sold_email'
 
 
 class Status(models.IntegerChoices):
