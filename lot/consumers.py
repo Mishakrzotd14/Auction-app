@@ -1,6 +1,5 @@
 import json
 
-from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 
 from lot.models import Lot
@@ -18,7 +17,7 @@ class LotConsumer(AsyncWebsocketConsumer):
 
         await self.accept()
 
-    async def disconnect(self, close_code):
+    async def disconnect(self):
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name

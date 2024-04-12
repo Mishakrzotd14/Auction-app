@@ -84,7 +84,6 @@ class LotListView(viewsets.ModelViewSet):
             auction.auction_status = Status.CLOSED
             auction.save(update_fields=['current_price', 'auction_status'])
 
-            send_event_about_price_change(lot.id, buy_it_now_price)
             send_event_about_recent_offer(lot)
 
             app.control.revoke(task_id=f'{TASK_NAME_ENG_AUC_LOT_SOLD_EMAIL}_{auction.id}')
