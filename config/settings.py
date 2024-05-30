@@ -23,6 +23,7 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'django_filters',
+    'channels',
 
     "item",
     "lot",
@@ -115,6 +116,17 @@ CELERY_RESULT_BACKEND = f'redis://{os.environ["REDIS_HOST"]}:{os.environ["REDIS_
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_SERIALIZER = 'json'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [
+                f'redis://{os.environ["REDIS_HOST"]}:{os.environ["REDIS_PORT"]}'
+            ],
+        },
+    },
+}
 
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587

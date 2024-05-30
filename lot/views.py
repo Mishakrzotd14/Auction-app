@@ -11,7 +11,11 @@ from auction.tasks import send_lot_sold_email_task
 from lot.filters import AuctionTypeFilter
 from lot.models import Lot, Offer
 from lot.serializers import LotSerializer, OfferSerializer
-from lot.services.change_price_service import send_email_about_change_price
+from lot.services.change_price_service import (
+    send_email_about_change_price,
+    send_event_about_price_change,
+    send_event_about_recent_offer
+)
 from lot.validators import (
     validate_status,
     validate_offer_price,
@@ -57,6 +61,9 @@ class LotListView(viewsets.ModelViewSet):
             auction.current_price = offer_price
             auction.save(update_fields=['current_price'])
 
+            send_event_about_price_change(lot.id, offer_price)
+            send_event_about_recent_offer(lot)
+
             return Response({"message": "Your offer has been accepted."}, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'])
@@ -76,6 +83,9 @@ class LotListView(viewsets.ModelViewSet):
             auction.current_price = buy_it_now_price
             auction.auction_status = Status.CLOSED
             auction.save(update_fields=['current_price', 'auction_status'])
+
+            send_event_about_recent_offer(lot)
+
             app.control.revoke(task_id=f'{TASK_NAME_ENG_AUC_LOT_SOLD_EMAIL}_{auction.id}')
         elif hasattr(auction, 'dutchauction'):
             auction.auction_status = Status.CLOSED
